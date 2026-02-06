@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "sourceMap": false,
+    "inlineSources": false,
+    "declaration": false,
+    "declarationMap": false,
+    "removeComments": true,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/__mocks__/**",
+    "prisma/seed*",
+    "node_modules",
+    "dist"
+  ]
+}

@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Executar testes apenas em arquivos modificados
+npm run test:pre-push 

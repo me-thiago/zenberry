@@ -1,0 +1,31 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../",
+  "testEnvironment": "node",
+  "testRegex": ".int-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", {
+      "tsconfig": "tsconfig.json",
+      "isolatedModules": true,
+      "diagnostics": {
+        "warnOnly": true
+      }
+    }]
+  },
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/src/$1"
+  },
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/**/*.module.ts",
+    "!src/main.ts",
+    "!src/app.module.ts"
+  ],
+  "coverageDirectory": "./coverage-integration",
+  "testPathIgnorePatterns": ["/node_modules/", "/dist/", "/test/unit/"],
+  "maxWorkers": 4,
+  "cache": true,
+  "testTimeout": 60000,
+  "verbose": true,
+  "forceExit": true
+} 

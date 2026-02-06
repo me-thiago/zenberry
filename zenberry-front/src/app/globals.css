@@ -1,0 +1,196 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  /* Theme colors - accessible via Tailwind classes */
+  --color-theme-bg-primary: var(--theme-bg-primary);
+  --color-theme-bg-secondary: var(--theme-bg-secondary);
+  --color-theme-accent-primary: var(--theme-accent-primary);
+  --color-theme-accent-secondary: var(--theme-accent-secondary);
+  --color-theme-accent-tertiary: var(--theme-accent-tertiary);
+  --color-theme-text-primary: var(--theme-text-primary);
+  --color-theme-text-secondary: var(--theme-text-secondary);
+
+  /* shadcn/ui colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Custom theme colors - Zenberry Light Mode */
+  --theme-bg-primary: #f5f5f5;
+  --theme-bg-secondary: #ededed;
+  --theme-accent-primary: #06ef7e;
+  --theme-accent-secondary: #024653;
+  --theme-accent-tertiary: #8b53fe;
+  --theme-text-primary: #171614;
+  --theme-text-secondary: #666666;
+
+  /* shadcn/ui default mappings */
+  --background: #f5f5f5;
+  --foreground: #171614;
+  --card: #ededed;
+  --card-foreground: #171614;
+  --popover: #ffffff;
+  --popover-foreground: #171614;
+  --primary: #06ef7e;
+  --primary-foreground: #171614;
+  --secondary: #024653;
+  --secondary-foreground: #171614;
+  --muted: #e5e5e5;
+  --muted-foreground: #666666;
+  --accent: #8b53fe;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e0e0e0;
+  --input: #e0e0e0;
+  --ring: #06ef7e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Zenberry Loader Animations */
+@keyframes petal-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes letter-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-petal-appear {
+  animation: petal-appear 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-letter-appear {
+  animation: letter-appear 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* Mobile safe area support */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* Garante que o input do chat fique fixo na parte inferior */
+.chat-interface-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chat-input-container {
+  position: relative;
+  z-index: 10;
+}
+
+/* Mobile viewport height utilities */
+@supports (height: 100dvh) {
+  .h-screen-mobile {
+    height: 100dvh;
+  }
+  
+  .min-h-screen-mobile {
+    min-height: 100dvh;
+  }
+}
+
+/* Chat container adjustments for mobile keyboard */
+@media (max-width: 768px) {
+  .chat-container {
+    height: 100dvh;
+    max-height: 100dvh;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+  
+  .chat-messages {
+    /* Altura flexível que se ajusta ao espaço disponível */
+    flex: 1 1 auto;
+    min-height: 0;
+    /* Garante que o conteúdo seja scrollável mesmo com teclado aberto */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Container de sugestões posicionado mais próximo do input */
+  .chat-suggestions-container {
+    flex: 1;
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    /* Padding inferior muito maior para empurrar para baixo e próximo do input */
+    padding-bottom: 8rem;
+    padding-top: 0;
+    /* Usa margin-top auto para empurrar para baixo */
+    margin-top: auto;
+    /* Garante que ocupe toda altura disponível */
+    min-height: 0;
+  }
+  
+  /* Quando o teclado está aberto (altura menor), ajusta o padding */
+  @media (max-height: 600px) {
+    .chat-suggestions-container {
+      padding-bottom: 3rem;
+      padding-top: 0;
+    }
+  }
+  
+  .chat-input-container {
+    position: relative;
+    width: 100%;
+    background: white;
+  }
+}

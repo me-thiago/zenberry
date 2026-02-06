@@ -1,0 +1,828 @@
+# Regras de Engenharia - Scaffold API (NestJS)
+
+Este documento define as diretrizes e padroes de engenharia para o projeto **Scaffold API**, um backend NestJS com autenticacao, RAG, ingestao assincrona e integracoes com storage, e-mail e cache.
+
+---
+
+## Indice
+
+0. [Workflow de Interacao com o Usuario](#workflow-de-interacao-com-o-usuario)
+1. [Arquitetura NestJS](#arquitetura-nestjs)
+2. [Controllers e REST API](#controllers-e-rest-api)
+3. [Services e Logica de Negocio](#services-e-logica-de-negocio)
+4. [DTOs e Validacao](#dtos-e-validacao)
+5. [Autenticacao e Autorizacao](#autenticacao-e-autorizacao)
+6. [Banco de Dados e Migracoes](#banco-de-dados-e-migracoes)
+7. [Observabilidade e Logging](#observabilidade-e-logging)
+8. [Padroes de Codigo](#padroes-de-codigo)
+9. [Testes](#testes)
+10. [Checklist de Revisao](#checklist-de-revisao)
+
+---
+
+## 0. Workflow de Interacao com o Usuario
+
+Quando o usuario solicitar uma implementacao ou reportar um bug, siga este fluxo obrigatorio:
+
+### Passo 1: Identificar o Tipo
+- **Task:** Nova funcionalidade, melhoria, refatoracao
+- **Bug:** Correcao de comportamento incorreto
+
+### Passo 2: Ler o ISSUE-INDEX.md
+- Leia `docs/ISSUE-INDEX.md` para descobrir a proxima numeracao
+- Tasks: TASK-001, TASK-002, etc.
+- Bugs: BUG-001, BUG-002, etc.
+
+### Passo 3: Criar a Documentacao da Task/Bug
+- Crie `docs/task/TASK-XXX-slug.md` ou `docs/task/BUG-XXX-slug.md`
+- Preencha: contexto, objetivo, criterios de aceite, plano de implementacao, riscos
+- Use o template correspondente como referencia
+
+### Passo 4: Atualizar o ISSUE-INDEX.md
+- Adicione uma linha na tabela apropriada (Tasks ou Bugs)
+- Status inicial: `todo`
+
+### Passo 5: Apresentar o Plano ao Usuario
+- Resuma o que foi entendido
+- Explique o plano de implementacao (passos claros)
+- Mostre os criterios de aceite
+- Liste mudancas no banco de dados (se houver)
+- **PERGUNTE SEMPRE:** "Posso comecar a implementar?"
+
+### Passo 6: Implementar (apos aprovacao)
+- Atualize o status no ISSUE-INDEX.md para `doing`
+- Atualize tambem o arquivo da task (TASK-XXX.md) com status `doing`
+- Implemente seguindo as regras deste documento
+- Use TodoWrite para rastrear progresso interno
+- **VA INFORMANDO O USUARIO** conforme avanca nos passos
+
+### Passo 7: Finalizar
+- Atualize o status no ISSUE-INDEX.md para `done`
+- Atualize o arquivo da task com status `done`
+- Crie `docs/implementations/IMPL-XXX-slug.md` documentando:
+  - Decisoes de design
+  - Endpoints criados/modificados
+  - Mudancas no banco de dados
+  - Exemplos de requisicoes e respostas
+  - Como testar
+- Commit seguindo Conventional Commits: `feat(modulo): TASK-XXX descricao`
+
+### Exemplo de Interacao
+
+**Usuario:** "Preciso adicionar um campo 'instructions' nos documentos para o chatbot saber como analisar cada documento"
+
+**Claude:**
+
+```
+Entendi! Vou criar a TASK-002 para adicionar o campo 'instructions' nos documentos.
+
+## TASK-002: Adicionar campo 'instructions' em Document
+
+### Contexto
+Permitir que admins definam instrucoes especificas por documento. O chatbot usara essas instrucoes ao analisar o documento durante interacoes.
+
+### Plano de Implementacao
+1. Adicionar campo 'instructions' (String?, @db.Text) no model Document do schema.prisma
+2. Gerar migracao com --create-only (SEM aplicar)
+3. Documentar plano de migracao em docs/migrations/PLAN-2025-10-22.md
+4. Atualizar CreateDocumentDto e UpdateDocumentDto
+5. Atualizar DocumentsService para persistir e retornar instructions
+6. Atualizar Swagger com @ApiProperty
+7. Escrever testes unitarios
+8. Testar manualmente via Swagger
+
+### Mudancas no Banco de Dados
+- Adicionar coluna 'instructions' na tabela 'documents' (nullable, tipo TEXT)
+- Migracao sera gerada mas NAO aplicada automaticamente
+
+### Criterios de Aceite
+- Campo 'instructions' disponivel via API (POST/PATCH /files)
+- Migracao documentada e revisavel
+- DTOs validando corretamente
+- Testes passando
+- Swagger atualizado
+
+Posso comecar a implementar?
+```
+
+**Usuario:** "Sim, pode"
+
+**Claude:**
+```
+Perfeito! Vou comecar.
+
+[Atualiza ISSUE-INDEX.md: status = doing]
+[Atualiza TASK-002.md: status = doing]
+
+Passo 1/8: Adicionando campo no schema.prisma...
+[implementa]
+Feito! Campo 'instructions String? @db.Text' adicionado no model Document.
+
+Passo 2/8: Gerando migracao (--create-only)...
+[executa comando]
+Feito! Migracao gerada: 20251022_add_instructions_to_document
+
+Passo 3/8: Documentando plano de migracao...
+[cria docs/migrations/PLAN-2025-10-22.md]
+Feito!
+
+Passo 4/8: Atualizando DTOs...
+[implementa]
+Feito! CreateDocumentDto e UpdateDocumentDto atualizados.
+
+Passo 5/8: Atualizando DocumentsService...
+[implementa]
+Feito! Service agora persiste e retorna instructions.
+
+Passo 6/8: Atualizando Swagger...
+[implementa]
+Feito! @ApiProperty adicionado aos DTOs.
+
+Passo 7/8: Escrevendo testes...
+[implementa]
+Feito! 3 testes adicionados e passando.
+
+Passo 8/8: Testando manualmente...
+[testa via Swagger]
+Feito! Funcionalidade testada com sucesso.
+
+[Atualiza ISSUE-INDEX.md: status = done]
+[Atualiza TASK-002.md: status = done]
+[Cria IMPL-002-adicionar-campo-instructions-documento.md]
+
+Implementacao concluida!
+
+Resumo:
+- Campo 'instructions' disponivel em POST/PATCH /files
+- Migracao gerada e documentada (revisar antes de aplicar)
+- Testes passando (npm run test)
+- Documentacao completa em docs/implementations/IMPL-002
+
+Proximo passo: Revisar e aprovar a migracao antes de aplicar em producao.
+```
+
+---
+
+## 1. Arquitetura NestJS
+
+### 1.1 Estrutura de Diretorios
+
+```
+src/
+├── common/                    # Utilitarios compartilhados
+│   ├── http/                  # Decorators, guards, filters, interceptors
+│   ├── pipes/                 # Pipes de validacao customizados
+│   └── utils/                 # Funcoes utilitarias (crypto, validators)
+├── config/                    # Configuracao e validacao de env
+├── core/                      # Servicos centrais (ingest, cron)
+├── jobs/                      # BullMQ queues e processors
+├── modules/                   # Modulos de dominio (auth, users, rooms, documents, etc.)
+├── providers/                 # Adapters externos (AI, storage, email, cache, RAG)
+├── prisma/                    # Prisma service e migrations
+└── main.ts                    # Bootstrap da aplicacao
+```
+
+### 1.2 Modulos de Dominio
+
+- Cada modulo deve ter: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.repository.ts` (se necessario), `dtos/`
+- Controllers NAO devem acessar Prisma diretamente; sempre use services
+- Services contem logica de negocio e orquestracao
+- Repositories (opcional) encapsulam queries complexas do Prisma
+
+**Exemplo de modulo:**
+```
+modules/rooms/
+├── rooms.module.ts
+├── rooms.controller.ts
+├── rooms.service.ts
+├── rooms.repository.ts
+└── dtos/
+    ├── create-room.dto.ts
+    ├── update-room.dto.ts
+    └── query.dto.ts
+```
+
+### 1.3 Providers
+
+- Use **Ports and Adapters** para integracoes externas
+- Cada provider deve ter uma interface/port e um ou mais adapters
+- Exemplo: `ai.port.ts` → `anthropic.ai.adapter.ts`, `qwen.ai.adapter.ts`
+
+---
+
+## 2. Controllers e REST API
+
+### 2.1 Responsabilidades do Controller
+
+- Receber requisicoes HTTP
+- Validar payloads via DTOs
+- Invocar services
+- Retornar respostas padronizadas
+
+**Controllers NAO devem:**
+- Conter logica de negocio
+- Acessar Prisma diretamente
+- Fazer validacoes complexas (use pipes/guards)
+
+### 2.2 Status Codes HTTP
+
+Utilize os codigos HTTP adequados:
+- `200 OK` - Sucesso (GET, PATCH)
+- `201 Created` - Criacao (POST)
+- `204 No Content` - Delecao sem corpo
+- `400 Bad Request` - Validacao falhou
+- `401 Unauthorized` - Nao autenticado
+- `403 Forbidden` - Nao autorizado (RBAC)
+- `404 Not Found` - Recurso nao encontrado
+- `409 Conflict` - Conflito de estado
+- `422 Unprocessable Entity` - Regra de negocio violada
+- `500 Internal Server Error` - Erro inesperado
+
+### 2.3 Swagger/OpenAPI
+
+- Documente **todos** os endpoints com decorators `@Api*`
+- Use `@ApiOperation()`, `@ApiResponse()`, `@ApiBearerAuth()`, etc.
+- Defina schemas claros com `@ApiProperty()` nos DTOs
+
+**Exemplo:**
+```typescript
+@Controller('rooms')
+@ApiTags('Rooms')
+@ApiBearerAuth()
+export class RoomsController {
+    constructor(private readonly roomsService: RoomsService) {}
+
+    @Get()
+    @ApiOperation({ summary: 'Listar salas do usuario' })
+    @ApiResponse({ status: 200, description: 'Lista de salas', type: [RoomResponseDto] })
+    async list(@CurrentUser() user: User, @Query() query: QueryDto) {
+        return this.roomsService.findAllByUser(user.id, query);
+    }
+
+    @Post()
+    @ApiOperation({ summary: 'Criar nova sala' })
+    @ApiResponse({ status: 201, description: 'Sala criada', type: RoomResponseDto })
+    async create(@CurrentUser() user: User, @Body() dto: CreateRoomDto) {
+        return this.roomsService.create(user.id, dto);
+    }
+}
+```
+
+### 2.4 Paginacao
+
+Use `take` (limit) e `skip` (offset):
+```typescript
+export class QueryDto {
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    @Max(100)
+    @Type(() => Number)
+    @ApiProperty({ required: false, default: 20 })
+    take?: number = 20;
+
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    @Type(() => Number)
+    @ApiProperty({ required: false, default: 0 })
+    skip?: number = 0;
+}
+```
+
+---
+
+## 3. Services e Logica de Negocio
+
+### 3.1 Responsabilidades do Service
+
+- Implementar logica de negocio
+- Validar ownership/permissoes (object-level authorization)
+- Orquestrar chamadas a repositories, providers e outros services
+- Lancar excecoes claras (`NotFoundException`, `ForbiddenException`, `BadRequestException`, etc.)
+
+**Exemplo:**
+```typescript
+@Injectable()
+export class RoomsService {
+    constructor(private prisma: PrismaService) {}
+
+    /**
+     * Finds a room by ID and validates ownership.
+     * @throws NotFoundException if room does not exist
+     * @throws ForbiddenException if user is not owner
+     */
+    async findOneByIdAndValidateOwnership(roomId: string, userId: string): Promise<DataRoom> {
+        const room = await this.prisma.dataRoom.findUnique({
+            where: { id: roomId },
+        });
+
+        if (!room) {
+            throw new NotFoundException('Sala nao encontrada');
+        }
+
+        if (room.userId !== userId) {
+            throw new ForbiddenException('Voce nao tem permissao para acessar esta sala');
+        }
+
+        return room;
+    }
+}
+```
+
+### 3.2 Validacao de Ownership
+
+**Sempre valide ownership no service antes de operacoes sensiveis:**
+- GET (quando privado), PATCH, DELETE
+- Use helper methods como `findOneByIdAndValidateOwnership`
+
+---
+
+## 4. DTOs e Validacao
+
+### 4.1 ValidationPipe Global
+
+No `main.ts`, configure o `ValidationPipe` global:
+```typescript
+app.useGlobalPipes(
+    new ValidationPipe({
+        whitelist: true, // Remove propriedades nao decoradas
+        forbidNonWhitelisted: true, // Retorna erro se houver props extras
+        transform: true, // Transforma payloads em instancias de DTO
+        transformOptions: {
+            enableImplicitConversion: true, // Converte tipos automaticamente
+        },
+    }),
+);
+```
+
+### 4.2 Decorators de Validacao
+
+Use `class-validator` e `class-transformer`:
+```typescript
+export class CreateRoomDto {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ example: 'Projeto X' })
+    name: string;
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ required: false, example: 'Descricao da sala' })
+    description?: string;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    @ApiProperty({ required: false, type: [String], example: ['tag1', 'tag2'] })
+    tags?: string[];
+}
+```
+
+### 4.3 DTOs de Resposta
+
+Crie DTOs para padronizar respostas:
+```typescript
+export class RoomResponseDto {
+    @ApiProperty()
+    id: string;
+
+    @ApiProperty()
+    name: string;
+
+    @ApiProperty({ required: false })
+    description?: string;
+
+    @ApiProperty({ type: [String] })
+    tags: string[];
+
+    @ApiProperty()
+    createdAt: Date;
+
+    @ApiProperty()
+    updatedAt: Date;
+}
+```
+
+---
+
+## 5. Autenticacao e Autorizacao
+
+### 5.1 Guards
+
+Use guards para proteger rotas:
+- `JwtAuthGuard` - Autenticacao JWT (padrao em todos os endpoints)
+- `JwtRefreshGuard` - Refresh token
+- `ApiKeyGuard` - API Key
+- `PublicAccessGuard` - Acesso publico com sessao
+- `TwoFaGuard` - 2FA
+
+**Uso:**
+```typescript
+@UseGuards(JwtAuthGuard)
+@Controller('rooms')
+export class RoomsController {
+    // Todos os endpoints aqui exigem autenticacao
+}
+```
+
+### 5.2 Rotas Publicas
+
+Use o decorator `@Public()` para rotas sem autenticacao:
+```typescript
+@Public()
+@Post('auth/login')
+async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+}
+```
+
+### 5.3 RBAC e Object-Level Authorization
+
+- **RBAC (Role-Based):** Nao implementado ainda (futuro)
+- **Object-Level Authorization:** Sempre valide ownership no service
+
+**Exemplo:**
+```typescript
+@Patch(':id')
+async update(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() dto: UpdateRoomDto,
+) {
+    // Service valida se user.id === room.userId
+    return this.roomsService.update(user.id, id, dto);
+}
+```
+
+### 5.4 OWASP API Security Top 10
+
+Siga as diretrizes:
+- **API1:2023 - Broken Object Level Authorization (BOLA):** Valide ownership sempre
+- **API2:2023 - Broken Authentication:** Use JWT seguro + refresh tokens
+- **API3:2023 - Broken Object Property Level Authorization (BOPLA):** Use `whitelist: true` no ValidationPipe
+- **API4:2023 - Unrestricted Resource Consumption:** Use rate limiting (`@nestjs/throttler`)
+- **API5:2023 - Broken Function Level Authorization (BFLA):** Use guards e roles
+- **API6:2023 - Unrestricted Access to Sensitive Business Flows:** Valide limites de uso
+- **API7:2023 - Server Side Request Forgery (SSRF):** Valide URLs externas
+- **API8:2023 - Security Misconfiguration:** Use Helmet, CORS adequado, variaveis de ambiente validadas
+- **API9:2023 - Improper Inventory Management:** Documente todos os endpoints no Swagger
+- **API10:2023 - Unsafe Consumption of APIs:** Valide respostas de APIs externas
+
+---
+
+## 6. Banco de Dados e Migracoes
+
+### 6.1 Prisma
+
+- ORM principal: **Prisma**
+- Schema: `prisma/schema.prisma`
+- Migrations: `prisma/migrations/`
+
+### 6.2 Regras de Migracoes
+
+**NUNCA execute migracoes automaticamente no codigo!**
+
+**Processo obrigatorio:**
+1. Altere o `schema.prisma`
+2. Gere a migracao **SEM aplicar:**
+   ```bash
+   npx prisma migrate dev --create-only
+   ```
+3. Revise a migracao gerada em `prisma/migrations/`
+4. Documente o plano em `docs/migrations/PLAN-YYYY-MM-DD.md`
+5. Crie um PR com a migracao
+6. Apos aprovacao, aplique com:
+   ```bash
+   npx prisma migrate deploy
+   ```
+   (geralmente via CI/CD em producao)
+
+**Exemplo de plano de migracao:**
+```markdown
+# Plano de Migracao - 2025-10-22
+
+## Objetivo
+Adicionar campo `instructions` na tabela `Document` para suportar instrucoes por documento.
+
+## Alteracoes no Schema
+- Campo `instructions` (String?, @db.Text) em `Document`
+
+## Riscos
+- Nenhum (campo nullable, nao quebra dados existentes)
+
+## Rollback
+- Remover campo via nova migracao
+
+## Aprovacao
+- [ ] Revisado por: ___
+- [ ] Aplicado em staging: ___
+- [ ] Aplicado em producao: ___
+```
+
+### 6.3 Seeds
+
+Use seeds para popular dados de desenvolvimento:
+```bash
+npx prisma db seed
+```
+
+---
+
+## 7. Observabilidade e Logging
+
+### 7.1 Logger
+
+Use o logger do NestJS (`nestjs-pino`):
+```typescript
+@Injectable()
+export class RoomsService {
+    private readonly logger = new Logger(RoomsService.name);
+
+    async create(userId: string, dto: CreateRoomDto) {
+        this.logger.debug(`[create] Criando sala para user=${userId}, name=${dto.name}`);
+        // ...
+    }
+}
+```
+
+### 7.2 Correlation ID
+
+Implemente correlation ID para rastrear requisicoes:
+- Use um interceptor para adicionar `req.id` a todas as requisicoes
+- Inclua o correlation ID nos logs
+
+**Exemplo:**
+```typescript
+this.logger.debug(`[findOne] correlationId=${req.id} roomId=${id}`);
+```
+
+### 7.3 Niveis de Log
+
+- `debug` - Logs de debug (padrao para desenvolvimento)
+- `log` - Informacoes gerais
+- `warn` - Avisos
+- `error` - Erros (sempre logar stack trace)
+
+**Nunca logue:**
+- Senhas, tokens, API keys
+- PII (dados pessoais) sem consentimento
+- Dados sensiveis em geral
+
+---
+
+## 8. Padroes de Codigo
+
+### 8.1 Nomenclatura
+
+- **Variaveis/Funcoes:** `lowerCamelCase`
+- **Classes/Tipos:** `UpperCamelCase`
+- **Constantes:** `UPPER_SNAKE_CASE`
+- **Sem abreviacoes:** Use nomes descritivos (`user` em vez de `u`)
+
+### 8.2 Estrutura de Codigo
+
+- **Funcoes pequenas:** Maximo 20-30 linhas
+- **Single Responsibility Principle:** Uma responsabilidade por classe/funcao
+- **Early returns:** Minimize aninhamento
+- **Magic numbers/strings:** Use constantes
+
+**Exemplo:**
+```typescript
+// Ruim
+if (status === 'COMPLETED') {
+    if (user.role === 'admin') {
+        // ...
+    }
+}
+
+// Bom
+const STATUS_COMPLETED = 'COMPLETED';
+const ROLE_ADMIN = 'admin';
+
+if (status !== STATUS_COMPLETED) return;
+if (user.role !== ROLE_ADMIN) throw new ForbiddenException();
+// ...
+```
+
+### 8.3 Documentacao
+
+- Documente **apenas metodos** (nao variaveis)
+- Use JSDoc completo com `@param` e `@returns`
+- Explique **por que**, nao **o que**
+- Escreva em **ingles**
+
+**Exemplo:**
+```typescript
+/**
+ * Finds a room by ID and validates that the user is the owner.
+ * @param roomId - The room ID to find
+ * @param userId - The user ID to validate ownership
+ * @returns The room if found and user is owner
+ * @throws NotFoundException if room does not exist
+ * @throws ForbiddenException if user is not the owner
+ */
+async findOneByIdAndValidateOwnership(roomId: string, userId: string): Promise<DataRoom> {
+    // ...
+}
+```
+
+### 8.4 Tratamento de Erros
+
+- **Sempre capture excecoes**
+- **Nunca exponha stack traces ao cliente**
+- Use excecoes do NestJS (`NotFoundException`, `BadRequestException`, etc.)
+
+**Exemplo:**
+```typescript
+async findOne(id: string) {
+    try {
+        const room = await this.prisma.dataRoom.findUnique({ where: { id } });
+        if (!room) throw new NotFoundException('Sala nao encontrada');
+        return room;
+    } catch (error) {
+        if (error instanceof NotFoundException) throw error;
+        this.logger.error(`[findOne] Erro ao buscar sala: ${error.message}`, error.stack);
+        throw new InternalServerErrorException('Erro ao buscar sala');
+    }
+}
+```
+
+### 8.5 Async/Await
+
+- **Sempre use `await`** em promises
+- **Nunca deixe promises sem tratamento**
+- Use `Promise.all()` para operacoes paralelas
+
+**Exemplo:**
+```typescript
+// Ruim (sequencial desnecessario)
+const user = await this.prisma.user.findUnique({ where: { id: userId } });
+const room = await this.prisma.dataRoom.findUnique({ where: { id: roomId } });
+
+// Bom (paralelo)
+const [user, room] = await Promise.all([
+    this.prisma.user.findUnique({ where: { id: userId } }),
+    this.prisma.dataRoom.findUnique({ where: { id: roomId } }),
+]);
+```
+
+### 8.6 Estilo
+
+- **Indentacao:** 4 espacos
+- **Linha maxima:** 80 caracteres (flexivel para imports)
+- **Linhas em branco:** Separe blocos logicos
+- **Chaves:** Abertura na mesma linha
+- Use **ESLint** e **Prettier**
+
+---
+
+## 9. Testes
+
+### 9.1 Estrutura de Testes
+
+- **Unit tests:** `*.spec.ts` ao lado do arquivo testado
+- **E2E tests:** `test/*.e2e-spec.ts`
+
+### 9.2 Nomenclatura
+
+Use o padrao `test<What><When><Expected>`:
+```typescript
+describe('RoomsService', () => {
+    it('testFindOneThrowsNotFoundExceptionWhenRoomDoesNotExist', async () => {
+        // ...
+    });
+
+    it('testFindOneThrowsForbiddenExceptionWhenUserIsNotOwner', async () => {
+        // ...
+    });
+});
+```
+
+### 9.3 Cobertura
+
+- Priorize **logica critica** e **casos extremos**
+- Nao busque 100% de cobertura; foque em **qualidade**
+
+---
+
+## 10. Checklist de Revisao
+
+Antes de abrir um PR, verifique:
+
+**Codigo:**
+- [ ] Segue padroes de nomenclatura
+- [ ] Funcoes pequenas e com responsabilidade unica
+- [ ] Sem magic numbers/strings
+- [ ] Documentacao JSDoc nos metodos
+- [ ] Logs estrategicos (apenas `debug`)
+- [ ] Tratamento de erros adequado
+
+**API:**
+- [ ] Endpoints documentados no Swagger
+- [ ] Status codes HTTP corretos
+- [ ] DTOs com validacao `class-validator`
+- [ ] Paginacao com `take/skip` onde aplicavel
+
+**Autenticacao/Autorizacao:**
+- [ ] Guards aplicados corretamente
+- [ ] Ownership validado no service
+- [ ] Rotas publicas marcadas com `@Public()`
+
+**Banco de Dados:**
+- [ ] Migracoes geradas com `--create-only`
+- [ ] Plano de migracao documentado em `docs/migrations/`
+- [ ] Controllers nao acessam Prisma diretamente
+
+**Testes:**
+- [ ] Testes unitarios para logica critica
+- [ ] Casos extremos cobertos
+
+**Documentacao:**
+- [ ] `docs/ISSUE-INDEX.md` atualizado
+- [ ] Task/Bug documentado em `docs/task/`
+- [ ] Implementation documentada em `docs/implementations/` (se concluido)
+- [ ] Commits seguem **Conventional Commits**
+
+**Qualidade:**
+- [ ] Lint passou (`npm run lint`)
+- [ ] Build passou (`npm run build`)
+- [ ] Testes passaram (`npm run test`)
+
+---
+
+## 11. Conventional Commits
+
+Use o padrao:
+```
+<tipo>(<escopo>): <descricao curta> [ID]
+
+<corpo opcional>
+```
+
+**Tipos:**
+- `feat` - Nova funcionalidade
+- `fix` - Correcao de bug
+- `refactor` - Refatoracao
+- `docs` - Documentacao
+- `test` - Testes
+- `chore` - Tarefas de manutencao
+
+**Exemplos:**
+```
+feat(rooms): adicionar campo instructions TASK-005
+fix(auth): corrigir validacao de ownership BUG-003
+docs: atualizar CLAUDE.md com regras de migrations
+```
+
+---
+
+## 12. Resolucao de Problemas Complexos
+
+Para bugs dificeis:
+1. **Identificar:** Liste 4-5 possiveis causas raiz
+2. **Selecionar:** Escolha as 2 mais provaveis
+3. **Trabalhar:** Implemente solucoes para essas 2
+4. **Validar:** Verifique se o problema foi resolvido
+5. **Iterar:** Volte a lista se necessario
+
+---
+
+## 13. Comandos Uteis
+
+```bash
+# Desenvolvimento
+npm run start:dev
+
+# Build
+npm run build
+
+# Testes
+npm run test
+npm run test:watch
+npm run test:e2e
+npm run test:cov
+
+# Lint
+npm run lint
+
+# Prisma
+npx prisma migrate dev --create-only   # Gerar migracao (SEM aplicar)
+npx prisma migrate deploy              # Aplicar migracoes (CI/CD)
+npx prisma generate                    # Gerar client
+npx prisma db seed                     # Executar seeds
+npx prisma studio                      # Abrir Prisma Studio
+```
+
+---
+
+## 14. Recursos
+
+- [Documentacao NestJS](https://docs.nestjs.com/)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [OWASP API Security Top 10](https://owasp.org/API-Security/editions/2023/en/0x00-header/)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+
+---
+
+**Ultima atualizacao:** 2025-10-22

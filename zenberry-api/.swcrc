@@ -1,0 +1,13 @@
+{
+    "jsc": {
+      "target": "es2021",
+      "parser": { "syntax": "typescript", "decorators": true }
+    },
+    "module": {
+      "type": "commonjs",
+      "strict": false,   // gera código solto
+      "noInterop": true, // evita helpers extras
+      "lazy": false,
+      "ignoreDynamic": true
+    }
+  }

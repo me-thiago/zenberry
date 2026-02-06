@@ -1,0 +1,454 @@
+---
+alwaysApply: true
+---
+## Arquitetura e Estrutura
+
+### Next.js App Router
+- **Preferir Server Components** por padrao; usar Client Components (`"use client"`) apenas quando necessario:
+  - Hooks React (`useState`, `useEffect`, `useContext`)
+  - Event handlers (`onClick`, `onChange`)
+  - Bibliotecas que dependem de APIs do browser
+  - `useSearchParams`, `usePathname`, `useRouter` (client-side)
+- **Route Groups**: usar `(dashboard)` para rotas privadas e `(public)` para publicas
+- **Layouts aninhados**: aproveitar `layout.tsx` para estrutura compartilhada e protecao de rotas
+- **Colocacao de arquivos**: manter logica de UI proxima as rotas (`app/`), componentes reutilizaveis em `src/components/`
+
+### Organizacao de Codigo
+```
+src/
+├── app/                    # App Router (rotas e paginas)
+│   ├── (dashboard)/       # Rotas privadas (autenticadas)
+│   ├── (public)/          # Rotas publicas
+│   └── layout.tsx         # Layout raiz
+├── components/
+│   ├── kit/               # Componentes shadcn/ui (nao editar diretamente)
+│   ├── layout/            # Componentes estruturais (shell, sidebar, nav)
+│   ├── dialogs/           # Modais e dialogos
+│   ├── forms/             # Formularios especializados
+│   └── providers/         # Context providers
+├── hooks/                 # Hooks customizados
+├── lib/
+│   ├── api/               # Cliente HTTP e servicos da API externa
+│   ├── auth/              # Estado de autenticacao e hooks
+│   ├── utils/             # Utilitarios gerais
+│   └── utils.ts           # cn() e helpers
+└── styles/
+    └── globals.css        # Estilos globais e Tailwind
+```
+
+---
+
+## shadcn/ui - Componentes de UI
+
+### Regras de Uso OBRIGATORIAS
+1. **NUNCA reimplementar componentes existentes** - sempre consultar `src/components/kit/` antes de criar novos componentes de UI
+2. **Instalar via CLI oficial**: `pnpm dlx shadcn@latest add [component]`
+3. **Nao editar diretamente** componentes em `kit/` - criar wrappers em `components/` se precisar customizar
+4. **Usar composicao**: aproveitar `asChild` (Radix Slot) para compor comportamentos
+
+### Componentes Instalados (consultar `components.json`)
+- Avatar, Badge, Button, Card, Checkbox, Command, Dialog, Dropdown Menu, Input, Label, Password Input, Scroll Area, Select, Separator, Sheet, Sidebar, Skeleton, Switch, Table, Tabs, Textarea, Tooltip
+
+### Exemplo: Wrapper com `asChild`
+```tsx
+// ❌ NAO criar novo botao customizado
+function MyCustomButton() {
+  return <button className="...">Click me</button>
+}
+
+// ✅ Usar Button do shadcn com asChild para composicao
+import { Button } from "@/components/kit/button"
+
+function IconButton({ children, ...props }: ButtonProps) {
+  return (
+    <Button variant="ghost" size="icon" {...props}>
+      {children}
+    </Button>
+  )
+}
+```
+
+### Variantes e Customizacao
+- Usar `cva` (class-variance-authority) para adicionar variantes em wrappers
+- Manter as variantes padrao do shadcn intactas em `kit/`
+
+---
+
+## Mobile-First e Responsividade
+
+### Principio: Validar 320px SEMPRE
+- **Breakpoints do Tailwind**: `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px)
+- **Testar cenarios extremos**:
+  - Titulos longos sem espacos: `https://veryveryveryverylongdomainname.com/path`
+  - Caracteres CJK (chines, japones, coreano) e emojis
+  - Textos sem espacos (URLs, hashes, tokens)
+
+### Prevencao de Container Break
+```tsx
+// ✅ Card resiliente a overflow
+<Card className="w-full max-w-sm">
+  <CardHeader>
+    <CardTitle className="truncate">
+      {/* Trunca em 1 linha com ellipsis */}
+      Titulo muito longo que pode quebrar o layout
+    </CardTitle>
+    <CardDescription className="line-clamp-2">
+      {/* Trunca em 2 linhas */}
+      Descricao longa que precisa ser limitada para nao quebrar
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p className="break-words">
+      {/* Quebra palavras longas sem espacos */}
+      https://veryveryveryverylongurl.com/path/to/resource
+    </p>
+  </CardContent>
+</Card>
+```
+
+### Classes de Truncamento Tailwind
+- `truncate`: 1 linha + ellipsis (requer `display: block` ou `inline-block`)
+- `line-clamp-{n}`: multiplas linhas + ellipsis (`n` = 1-6 ou arbitrary `[7]`)
+- `break-words`: quebra palavras longas no limite do container
+- `break-all`: quebra em qualquer caractere (usar com cautela, pode quebrar palavras normais)
+
+### Wrapper Flex/Grid: `min-w-0`
+```tsx
+// ❌ Truncamento NAO funciona (flex item nao respeita truncate)
+<div className="flex">
+  <span className="truncate">Texto longo...</span>
+</div>
+
+// ✅ Adicionar min-w-0 no wrapper para truncamento funcionar
+<div className="flex min-w-0">
+  <span className="truncate">Texto longo...</span>
+</div>
+```
+
+---
+
+## Performance e Otimizacoes
+
+### Imagens
+- **Sempre usar `<Image />` do Next.js** ao inves de `<img>`
+- Especificar `width`, `height` e `sizes` para evitar CLS (Cumulative Layout Shift)
+- Preferir formatos modernos (WebP/AVIF) via `next.config.js`:
+```js
+images: {
+  formats: ['image/avif', 'image/webp'],
+  remotePatterns: [
+    { protocol: 'https', hostname: 'example.com' }
+  ]
+}
+```
+
+### Fontes
+- Usar `next/font` para carregar fontes com zero FOUT/FOIT:
+```tsx
+// app/layout.tsx
+import { Inter } from 'next/font/google'
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="pt-BR" className={inter.variable}>
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+### Code Splitting
+- Next.js 15 faz tree-shaking e code splitting automaticamente
+- Para componentes pesados, usar `next/dynamic`:
+```tsx
+import dynamic from 'next/dynamic'
+const HeavyChart = dynamic(() => import('@/components/heavy-chart'), {
+  loading: () => <Skeleton className="h-96 w-full" />,
+  ssr: false // se o componente depende de window/document
+})
+```
+
+---
+
+## Data Fetching, Cache e Revalidacao
+
+### Fetch no Server Component
+```tsx
+// app/rooms/page.tsx
+import { api } from '@/lib/api'
+
+export default async function RoomsPage() {
+  // fetch() do Next.js tem cache por padrao
+  const rooms = await api.rooms.getRooms()
+
+  return <RoomsList rooms={rooms} />
+}
+```
+
+### Cache e Revalidacao
+```tsx
+// Revalidar apos mutacao (Server Action)
+'use server'
+import { revalidatePath, revalidateTag } from 'next/cache'
+
+export async function createRoom(data: FormData) {
+  await api.rooms.createRoom({ name: data.get('name') })
+  revalidatePath('/rooms') // revalida rota especifica
+  // ou
+  revalidateTag('rooms') // revalida fetch com tag 'rooms'
+}
+```
+
+### Fetch com `next: {}`
+```tsx
+// Cache por 1 hora
+fetch('https://api.example.com/data', {
+  next: { revalidate: 3600 }
+})
+
+// Sem cache (sempre buscar fresco)
+fetch('https://api.example.com/data', {
+  cache: 'no-store'
+})
+
+// Cache com tags (para revalidateTag)
+fetch('https://api.example.com/data', {
+  next: { tags: ['rooms'] }
+})
+```
+
+### Client-Side Fetching (React Query)
+- Usar `@tanstack/react-query` para cache client-side e sincronizacao
+- Hooks customizados em `hooks/queries/`:
+```tsx
+// hooks/queries/use-rooms.ts
+'use client'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+
+export function useRooms() {
+  return useQuery({
+    queryKey: ['rooms'],
+    queryFn: () => api.rooms.getRooms(),
+    staleTime: 5 * 60 * 1000 // 5 minutos
+  })
+}
+```
+
+---
+
+## Acessibilidade
+
+### Regras Obrigatorias
+1. **Icones nunca devem ser mudos**: sempre adicionar `aria-label` em botoes com apenas icone
+```tsx
+// ❌ Botao sem contexto para leitores de tela
+<Button variant="ghost" size="icon">
+  <Settings />
+</Button>
+
+// ✅ Com aria-label
+<Button variant="ghost" size="icon" aria-label="Configuracoes">
+  <Settings />
+</Button>
+```
+
+2. **Foco visivel**: componentes shadcn/ui ja incluem `focus-visible:ring-2`; nao remover
+3. **Navegacao por teclado**: garantir que todos os controles funcionam com Tab/Enter/Space
+4. **Contraste de cores**: seguir WCAG 2.1 AA (minimo 4.5:1 para texto normal)
+5. **Landmarks semanticos**: usar `<nav>`, `<main>`, `<aside>`, `<header>`, `<footer>`
+6. **Formularios**: associar `<Label>` com `<Input>` via `htmlFor`/`id`
+
+### Radix UI e shadcn/ui
+- Componentes shadcn/ui sao construidos sobre Radix UI, que ja inclui acessibilidade (ARIA, foco, teclado)
+- Validar com ferramentas: axe DevTools, WAVE, Lighthouse
+
+---
+
+## Tailwind CSS v4
+
+### Estilo Global
+- Arquivo: `src/styles/globals.css`
+- Usa `@import "tailwindcss"` e `@theme inline` para variaveis CSS
+- Variaveis de cor em formato `oklch()` para melhor controle de contraste
+
+### Utility-First
+- **Preferir classes Tailwind** ao inves de CSS customizado
+- Para estilos repetitivos, criar componentes reutilizaveis, nao `@apply`
+
+### Arbitrary Values
+```tsx
+<div className="w-[342px] h-[calc(100vh-64px)]" />
+```
+
+### Modo Dark
+- `next-themes` gerencia tema (light/dark/system)
+- Classes condicionais: `dark:bg-gray-900`
+
+---
+
+## Padroes de Codigo
+
+### TypeScript
+- **Modo estrito**: `"strict": true` no `tsconfig.json`
+- **Sem `any`**: usar `unknown` ou tipos especificos
+- **Inferencia de tipos**: deixar TS inferir quando possivel
+```tsx
+// ❌ tipo redundante
+const name: string = "Alice"
+
+// ✅ inferencia automatica
+const name = "Alice"
+```
+
+### Props e Interfaces
+```tsx
+// Preferir type para props de componentes
+type ButtonProps = React.ComponentProps<"button"> & {
+  variant?: "primary" | "secondary"
+  isLoading?: boolean
+}
+
+// Interfaces para contratos de objetos complexos
+interface User {
+  id: string
+  name: string
+  email: string
+}
+```
+
+### Naming
+- Componentes: `PascalCase` (ex: `RoomsList`, `CreateRoomDialog`)
+- Funcoes/variaveis: `camelCase` (ex: `getRooms`, `isLoading`)
+- Constantes: `UPPER_SNAKE_CASE` (ex: `API_BASE_URL`, `MAX_RETRIES`)
+- Arquivos: `kebab-case` (ex: `room-detail.tsx`, `use-rooms.ts`)
+
+### Exports
+```tsx
+// ❌ export default dificulta refactoring
+export default function RoomsList() {}
+
+// ✅ named export facilita imports
+export function RoomsList() {}
+```
+
+---
+
+## Linting e Formatacao
+
+### ESLint
+- Configuracao: `eslint.config.mjs`
+- Rodar: `pnpm lint`
+- Regras do Next.js (`eslint-config-next`) incluem validacoes de performance e acessibilidade
+
+### Prettier (recomendado)
+```json
+// .prettierrc
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5"
+}
+```
+
+### EditorConfig
+```ini
+# .editorconfig
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+```
+
+---
+
+## Conventional Commits
+
+### Formato
+```
+<tipo>(<escopo>): <descricao>
+
+[corpo opcional]
+
+[rodape opcional - referencia do issue]
+```
+
+### Tipos
+- `feat`: nova funcionalidade
+- `fix`: correcao de bug
+- `docs`: documentacao
+- `style`: formatacao (nao afeta logica)
+- `refactor`: refatoracao (nao altera comportamento)
+- `perf`: melhoria de performance
+- `test`: testes
+- `chore`: tarefas de manutencao (build, deps)
+
+### Exemplos
+```bash
+feat(card): TASK-001 truncar titulos longos com ellipsis
+fix(sidebar): BUG-042 corrigir overflow em mobile 320px
+docs: atualizar README com instrucoes de shadcn
+refactor(api): extrair logica de retry para client base
+```
+
+---
+
+## Checklist de Revisao
+
+Antes de considerar uma tarefa completa:
+
+- [ ] **Mobile**: testado em 320px e cenarios extremos (titulos longos, URLs, emojis)
+- [ ] **Truncamento**: `truncate`, `line-clamp-N`, `break-words` onde necessario; `min-w-0` em flex/grid
+- [ ] **shadcn/ui**: nao reimplementei componentes existentes; usei composicao (`asChild`)
+- [ ] **Imagens**: usado `<Image />` com `width`/`height`/`sizes`
+- [ ] **Acessibilidade**: `aria-label` em icones, foco visivel, navegacao por teclado
+- [ ] **TypeScript**: sem `any`, tipos estritos, `pnpm typecheck` verde
+- [ ] **Lint**: `pnpm lint` sem erros
+- [ ] **Performance**: Server Components quando possivel, `dynamic` para componentes pesados
+- [ ] **Commit**: mensagem em Conventional Commits com referencia ao issue (ex: `TASK-001`)
+
+---
+
+## Recursos e Documentacao
+
+- [Next.js 15 Docs](https://nextjs.org/docs)
+- [shadcn/ui](https://ui.shadcn.com)
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [Radix UI](https://www.radix-ui.com)
+- [React Query](https://tanstack.com/query/latest)
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+
+---
+
+## Comandos Uteis
+
+```bash
+# Desenvolvimento
+pnpm dev
+
+# Build
+pnpm build
+
+# Lint
+pnpm lint
+
+# Type check
+pnpm typecheck  # (adicionar script: "typecheck": "tsc --noEmit")
+
+# Adicionar componente shadcn/ui
+pnpm dlx shadcn@latest add [component]
+
+# Listar componentes disponiveis
+pnpm dlx shadcn@latest add
+```
+
+---
+
+**Ultima atualizacao**: 2025-10-22

@@ -1,0 +1,69 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String      @id @default(uuid()) @unique
+  
+  // Shopify Integration
+  shopifyCustomerId     String      @unique @map("shopify_customer_id")
+  shopifyAccessToken    String?     @map("shopify_access_token")      // bcrypt hash for security
+  shopifyTokenHash      String?     @map("shopify_token_hash")        // SHA-256 for O(1) lookup
+  shopifyTokenExpiresAt DateTime?   @map("shopify_token_expires_at")
+  
+  // Customer Data (do Shopify)
+  email                 String      @unique
+  firstName             String      @map("first_name")
+  lastName              String      @map("last_name")
+  phone                 String?
+  acceptsMarketing      Boolean     @default(false) @map("accepts_marketing")
+  
+  // Metadata
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+  deletedAt             DateTime?   @map("deleted_at")                // Soft delete
+  
+  // Relations
+  sessions              UserSession[]
+
+  @@index([email])
+  @@index([shopifyCustomerId])
+  @@index([shopifyTokenHash])
+  @@map("user")
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  valid     Boolean  @default(true)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("userSession")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  image       String?
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  size        String?
+  flavor      String?
+  categories  String[] @default([])
+  effects     String[] @default([])
+  benefits    String?  @db.Text
+  ingredients String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("product")
+}

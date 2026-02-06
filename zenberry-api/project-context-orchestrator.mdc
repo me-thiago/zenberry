@@ -1,0 +1,241 @@
+---
+description: Intelligent project context orchestrator that reads README.md, understands the Dooor Backend Platform architecture, and provides contextual guidance for feature implementation without constantly referencing other rules.
+globs: ["**/*.ts", "**/*.js", "**/*.json", "README.md"]
+alwaysApply: true
+---
+
+# 🎯 PROJECT CONTEXT ORCHESTRATOR - DOOOR BACKEND PLATFORM
+
+## AUTOMATIC PROJECT UNDERSTANDING
+==================================
+
+**This rule automatically contextualizes the Dooor Backend Platform and provides intelligent implementation guidance.**
+
+### 📖 PROJECT CONTEXT (Auto-extracted from README)
+-------------------------------------------------
+
+**Dooor Backend Platform** is an enterprise-grade NestJS backend featuring:
+- **Multi-tenant workspace system** with role-based access control
+- **AI-powered chat system** with unified provider support (Gemini, Anthropic, OpenAI, GPT-OSS, Perplexity)
+- **Real-time communication** via WebSockets and Server-Sent Events
+- **Comprehensive integrations** (Google OAuth, Discord, Twitter, Audio processing)
+- **Airdrop management** with automated distribution and task scheduling
+- **Queue management** with BullMQ and Redis for background processing
+- **PostgreSQL + Prisma** for robust, type-safe data management
+
+### 🏗️ ARCHITECTURE AWARENESS
+----------------------------
+```
+Technology Stack:
+├── Framework: NestJS + TypeScript
+├── Database: PostgreSQL + Prisma ORM
+├── Cache/Queues: Redis + BullMQ
+├── AI: Unified provider system with fallbacks
+├── Real-time: WebSockets + SSE
+└── Documentation: Swagger/OpenAPI
+
+Project Structure:
+src/
+├── modules/              # Business logic (auth, chats, users, workspace, airdrops)
+├── providers/           # External services (ai, email, cache, bucket)
+├── infra/              # Infrastructure (database, queues, cron, events)
+├── common/             # Shared utilities and environment config
+└── main.ts             # Application entry point
+```
+
+## 🧠 INTELLIGENT IMPLEMENTATION GUIDANCE
+========================================
+
+### CONTEXT-AWARE FEATURE ANALYSIS
+---------------------------------
+
+**When implementing any feature, automatically consider:**
+
+1. **Multi-tenant Isolation**: All features MUST respect workspace boundaries
+2. **Security-First**: Validate workspace ownership and implement proper access controls
+3. **AI Integration**: Leverage existing AIManagerService patterns for AI features
+4. **Real-time Capabilities**: Use established WebSocket/SSE patterns for live updates
+5. **Database Design**: Prefer extending existing tables over creating new ones
+6. **Service Organization**: Keep services focused and under 800 lines
+7. **API Documentation**: Comprehensive Swagger documentation is mandatory
+
+### IMPLEMENTATION DECISION TREE
+-------------------------------
+
+**🟢 SIMPLE FEATURES** (Direct implementation):
+- Single module modification
+- No schema changes
+- Clear business requirements
+- No external integrations
+
+**🟡 MODERATE FEATURES** (Structured analysis):
+- Cross-module interaction
+- Database modifications
+- External service integration
+- Security implications
+
+**🔴 COMPLEX FEATURES** (Full analysis required):
+- Architectural changes
+- Multiple integrations
+- Performance-critical
+- Security-sensitive
+
+### CONTEXTUAL QUESTIONING SYSTEM
+--------------------------------
+
+**Ask intelligent questions based on feature type:**
+
+**For AI Features:**
+- "Which AI provider best fits this use case?"
+- "Do you need streaming responses or batch processing?"
+- "Should this integrate with existing chat conversations?"
+
+**For Workspace Features:**
+- "Is this feature workspace-specific or platform-wide?"
+- "What role permissions should control access?"
+- "How should this respect workspace isolation?"
+
+**For Data Features:**
+- "Can we extend existing tables or do we need new ones?"
+- "What's the expected data volume and access patterns?"
+- "Are there data retention or audit requirements?"
+
+**For Integration Features:**
+- "Which external services need to be integrated?"
+- "Do you need real-time updates or periodic sync?"
+- "Should this trigger notifications or webhooks?"
+
+## 📋 COMPREHENSIVE IMPLEMENTATION STANDARDS
+===========================================
+
+### CODE QUALITY PRINCIPLES
+---------------------------
+- **Naming**: camelCase for variables/functions, PascalCase for classes, UPPER_SNAKE_CASE for constants
+- **Structure**: Single Responsibility Principle with early returns and minimal nesting
+- **Documentation**: JSDoc for methods/functions only, comprehensive Swagger for APIs
+- **Error Handling**: Meaningful errors without sensitive data exposure
+- **Logging**: Strategic logging for debugging, avoid log pollution
+
+### SECURITY IMPLEMENTATION
+---------------------------
+- **Authentication**: JWT-based with proper token validation
+- **Authorization**: Role-based access control within workspace context
+- **Input Validation**: DTOs with class-validator decorations
+- **Workspace Isolation**: Always filter by workspace ID in data queries
+- **Error Responses**: Consistent format without internal details
+
+### DATABASE MANAGEMENT
+----------------------
+- **Schema Design**: Normalized structure with proper relationships
+- **Migrations**: Always generate with descriptive names, never auto-apply
+- **Queries**: Use Prisma with include/select optimization
+- **Transactions**: For multi-step operations
+- **Environment**: Keep env.schema.ts synchronized with new variables
+
+### API DESIGN STANDARDS
+-----------------------
+- **REST Principles**: Proper HTTP methods and status codes
+- **Swagger Documentation**: Complete with examples, status codes, and authentication
+- **Validation**: Request/response validation with DTOs
+- **Pagination**: For list endpoints
+- **Error Handling**: Consistent error response format
+
+### AI INTEGRATION PATTERNS
+---------------------------
+- **Provider Management**: Use AIManagerService for unified access
+- **Streaming**: Server-Sent Events for real-time AI responses
+- **Fallbacks**: Implement provider fallback strategies
+- **Context**: Maintain conversation history and context
+- **Performance**: Optimize token usage and response times
+
+## 🔧 IMPLEMENTATION EXECUTION PROTOCOL
+======================================
+
+### PHASE 1: CONTEXTUAL ANALYSIS
+-------------------------------
+1. **Read README.md** to understand current project state
+2. **Analyze request** against existing architecture
+3. **Identify affected modules** and services
+4. **Assess complexity** and implementation approach
+5. **Ask clarifying questions** if context is unclear
+
+### PHASE 2: ARCHITECTURAL PLANNING
+----------------------------------
+1. **Map to existing modules** or identify new module needs
+2. **Design service structure** keeping under 800 lines
+3. **Plan database changes** with minimal schema impact
+4. **Design API endpoints** following REST principles
+5. **Consider security implications** and access controls
+
+### PHASE 3: IMPLEMENTATION EXECUTION
+-----------------------------------
+1. **Create/modify modules** following NestJS patterns
+2. **Implement services** with proper error handling
+3. **Create DTOs** with comprehensive validation
+4. **Apply security guards** as appropriate
+5. **Document APIs** with complete Swagger decorators
+6. **Update environment config** if needed
+
+### PHASE 4: QUALITY VALIDATION
+------------------------------
+1. **Verify security implementation** for workspace isolation
+2. **Check code quality** against established patterns
+3. **Validate API documentation** completeness
+4. **Review database changes** for optimization
+5. **Confirm integration points** work correctly
+
+## 🎯 SMART DEFAULTS AND PATTERNS
+================================
+
+### FOR AUTH FEATURES
+--------------------
+- Use existing JWT + Google OAuth patterns
+- Implement proper token refresh mechanisms
+- Apply AuthGuard for protected endpoints
+- Consider workspace context in permissions
+
+### FOR AI FEATURES
+------------------
+- Leverage AIManagerService for provider abstraction
+- Implement streaming for real-time responses
+- Use existing chat patterns for conversation management
+- Consider fallback strategies for provider failures
+
+### FOR WORKSPACE FEATURES
+-------------------------
+- Always implement WorkspaceGuard for isolation
+- Filter all queries by workspace ID
+- Consider role-based permissions
+- Implement proper audit logging
+
+### FOR INTEGRATION FEATURES
+---------------------------
+- Use provider pattern for external services
+- Implement proper error handling and retries
+- Consider rate limiting and throttling
+- Use queues for background processing
+
+### FOR DATABASE FEATURES
+------------------------
+- Prefer extending existing tables over new ones
+- Use proper relationships instead of denormalization
+- Implement strategic indexes for performance
+- Plan for future scalability
+
+## 🚀 EXECUTION TRIGGERS
+=======================
+
+**This orchestrator activates when:**
+- User requests new feature implementation
+- User asks for module modifications
+- User needs architectural guidance
+- User requests integration development
+- User asks about existing patterns or best practices
+
+**The orchestrator provides:**
+- Implementation guidance based on existing patterns
+- Intelligent questioning for unclear requirements
+- Structured implementation approach
+- Quality assurance based on established standards
+
+**Remember: This orchestrator understands your project deeply and provides contextual, intelligent guidance without constantly referencing external rules. It's your intelligent coding companion for the Dooor Backend Platform.**
