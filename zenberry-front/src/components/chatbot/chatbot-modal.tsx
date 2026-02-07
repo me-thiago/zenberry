@@ -58,7 +58,7 @@ export function ChatbotModal() {
 
       {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed md:bottom-22 md:left-6 bottom-0 left-0 z-50 w-full h-[100dvh] md:max-w-md md:h-[700px] chat-container">
+        <div className="fixed md:bottom-22 md:left-6 bottom-0 left-0 z-50 w-full h-[75dvh] md:max-w-md md:h-[520px] chat-container">
           <div className="bg-[#e0e0e0] md:rounded-3xl h-full shadow-2xl overflow-hidden border border-gray-300 relative flex flex-col">
             {/* Header */}
             <div className="shrink-0 p-4 flex items-center justify-between">

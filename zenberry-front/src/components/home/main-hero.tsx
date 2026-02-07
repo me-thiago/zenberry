@@ -12,11 +12,11 @@ export function MainHero() {
     <section className="relative h-[500px] flex justify-center transition-colors duration-200">
       <div className="container mx-auto mt-20 px-4 text-center">
         <h1 className="max-w-2xl m-auto text-5xl md:text-6xl font-thin text-white mb-6 transition-colors duration-200">
-          <span className="font-bold">CDB gummies</span>, the tastiest way to
+          <span className="font-bold">CBD gummies</span>, the tastiest way to
           wellness.
         </h1>
         <p className="text-lg text-white mt-12 mb-8 max-w-2xl mx-auto transition-colors duration-200">
-          <span className="font-bold">Medterra&apos;s CBD gummies</span> are
+          <span className="font-bold">Zenberry&apos;s CBD gummies</span> are
           carefully crafted with natural ingredients to enhance calmness, sleep,
           energy & more!
         </p>
