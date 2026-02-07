@@ -124,12 +124,14 @@ export function AuthCard() {
           </div>
           {/* Forgot Password (Login Only) */}
           <div className="flex justify-end">
-            <Link
-              href="/auth/forgot-password"
+            <a
+              href="https://zenberrynaturals.myshopify.com/account/login#recover"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm text-theme-accent-secondary hover:underline transition-colors duration-200"
             >
               Forgot password?
-            </Link>
+            </a>
           </div>
           {/* Submit Button */}
           <Button
